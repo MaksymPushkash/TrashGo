@@ -1,9 +1,7 @@
 from datetime import timedelta
 from typing import Annotated
-
 from fastapi import APIRouter, status, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
-
 from backend.app.dependencies import db_dependency
 from backend.app.models.user_model import Users
 from backend.app.schemas.user_schema import CreateUserRequest
