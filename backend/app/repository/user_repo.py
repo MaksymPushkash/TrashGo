@@ -1,64 +1,40 @@
 """
-Users repository.
+User Repository - Database access layer for Users.
 
-This layer isolates raw SQLAlchemy operations.
-Service functions should call these helpers instead of
-working with the session directly.
+Extends BaseRepository with user-specific query methods.
+Common CRUD operations are inherited from the base class.
 """
 
-from typing import Iterable, Optional
+from typing import Optional
 from sqlalchemy.orm import Session
 from backend.app.models.user_model import Users
-from backend.app.schemas.user_schema import UserCreate
+from backend.app.repository.base_repo import BaseRepository
 
 
-def create_user(db: Session, user_in: UserCreate, *, user_id: str) -> Users:
+class UserRepository(BaseRepository[Users]):
     """
-    Create and persist a new user.
-
-    NOTE:
-    - `user_id` is generated outside (service layer).
-    - `user_in.password` must already be hashed before calling this.
+    Inherits from BaseRepository:
+        - get(db, id) -> get user by ID
+        - get_all(db, skip, limit) -> list all users
+        - create(db, user) -> create new user
+        - update(db, user) -> update existing user
+        - delete(db, id) -> delete user by ID
+    
+    Custom methods:
+        - get_by_email(db, email) -> find user by email
+        - get_by_username(db, username) -> find user by username
     """
-
-    db_user = Users(
-        id=user_id,
-        email=user_in.email,
-        hashed_password=user_in.password,  # replace with real hash in service
-        role=user_in.role,
-    )
-    db.add(db_user)
-    db.commit()
-    db.refresh(db_user)
-    return db_user
+    
+    def __init__(self):
+        super().__init__(Users)
 
 
-def get_user(db: Session, user_id: str) -> Optional[Users]:
-    """Return user by id or None."""
-    return db.get(Users, user_id)
+    def get_by_email(self, db: Session, email: str) -> Optional[Users]:
+        return db.query(Users).filter(Users.email == email).first()
 
 
-def get_user_by_email(db: Session, email: str) -> Optional[Users]:
-    """Return user by email or None."""
-    return db.query(Users).filter(Users.email == email).first()
+    def get_by_username(self, db: Session, username: str) -> Optional[Users]:
+        return db.query(Users).filter(Users.username == username).first()
 
 
-def list_users(db: Session, *, skip: int = 0, limit: int = 100) -> Iterable[Users]:
-    """Return a slice of users for simple pagination."""
-    return db.query(Users).offset(skip).limit(limit).all()
-
-
-def delete_user(db: Session, user_id: str) -> bool:
-    """
-    Delete user by id.
-
-    Returns:
-        True if a row was deleted, False otherwise.
-    """
-    user = get_user(db, user_id)
-    if not user:
-        return False
-    db.delete(user)
-    db.commit()
-    return True
-
+user_repo = UserRepository()

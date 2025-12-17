@@ -1,25 +1,33 @@
+"""
+Order Schemas - Pydantic models for order validation.
+
+These schemas define the structure of order data
+for API requests and responses.
+"""
+
+from typing import Optional
 from pydantic import BaseModel
 
-
-class OrderBase(BaseModel):
-    user_id: str
-    courier_id: str | None = None
-    status: str
-    description: str | None = None
+from backend.app.models.order_model import OrderStatus
+from backend.app.schemas.base_schema import BaseReadSchema
 
 
-class OrderCreate(OrderBase):
-    """
-    Data needed to create a new order.
-    Right now this is the same as `OrderBase`.
-    """
-
-    pass
+class OrderCreate(BaseModel):
+    courier_id: Optional[str] = None
+    description: Optional[str] = None
 
 
-class OrderRead(OrderBase):
+class OrderRead(BaseReadSchema):
     id: str
+    user_id: str
+    courier_id: Optional[str] = None
+    status: OrderStatus
+    description: Optional[str] = None
 
-    class Config:
-        from_attributes = True
 
+class OrderStatusUpdate(BaseModel):
+    status: OrderStatus
+
+
+class OrderCourierAssign(BaseModel):
+    courier_id: str

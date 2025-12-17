@@ -1,5 +1,3 @@
-
-
 from fastapi import FastAPI
 from backend.app.api.v1 import orders, users, auth
 from backend.app.db.session import Base, engine
@@ -21,6 +19,7 @@ def create_app() -> FastAPI:
     @app.get("/")
     def healthcheck() -> dict[str, str]:
         return {"status": "ok"}
+
 
     return app
 

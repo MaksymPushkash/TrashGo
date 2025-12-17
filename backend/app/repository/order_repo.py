@@ -1,48 +1,45 @@
-from typing import Iterable, Optional
+"""
+Order Repository - Database access layer for Orders.
+
+Extends BaseRepository with order-specific query methods.
+Common CRUD operations are inherited from the base class.
+"""
+
+from typing import List
 from sqlalchemy.orm import Session
-from backend.app.models.order_model import Orders
-from backend.app.schemas.order_schema import OrderCreate
+from backend.app.models.order_model import Orders, OrderStatus
+from backend.app.repository.base_repo import BaseRepository
 
 
-def create_order(db: Session, order_in: OrderCreate, *, order_id: str) -> Orders:
+class OrderRepository(BaseRepository[Orders]):
     """
-    Create and persist a new order.
-
-    `order_id` is generated in the service layer.
+    Inherits from BaseRepository:
+        - get(db, id) -> get order by ID
+        - get_all(db, skip, limit) -> list all orders
+        - create(db, order) -> create new order
+        - update(db, order) -> update existing order
+        - delete(db, id) -> delete order by ID
+    
+    Custom methods:
+        - get_by_user(db, user_id) -> orders for a specific user
+        - get_by_courier(db, courier_id) -> orders for a specific courier
+        - get_by_status(db, status) -> orders with a specific status
     """
-    db_order = Orders(
-        id=order_id,
-        user_id=order_in.user_id,
-        courier_id=order_in.courier_id,
-        status=order_in.status,
-        description=order_in.description,
-    )
-    db.add(db_order)
-    db.commit()
-    db.refresh(db_order)
-    return db_order
+    
+    def __init__(self):
+        super().__init__(Orders)
 
 
-def get_order(db: Session, order_id: str) -> Optional[Orders]:
-    """Return order by id or None."""
-    return db.get(Orders, order_id)
+    def get_by_user(self, db: Session, user_id: str, skip: int = 0, limit: int = 100) -> List[Orders]:
+        return db.query(Orders).filter(Orders.user_id == user_id).offset(skip).limit(limit).all()
 
 
-def list_orders(db: Session, *, skip: int = 0, limit: int = 100) -> Iterable[Orders]:
-    """Return a slice of orders."""
-    return db.query(Orders).offset(skip).limit(limit).all()
+    def get_by_courier(self, db: Session, courier_id: str, skip: int = 0, limit: int = 100) -> List[Orders]:
+        return db.query(Orders).filter(Orders.courier_id == courier_id).offset(skip).limit(limit).all()
 
 
-def delete_order(db: Session, order_id: str) -> bool:
-    """
-    Delete order by id.
+    def get_by_status(self, db: Session, status: OrderStatus, skip: int = 0, limit: int = 100) -> List[Orders]:
+        return db.query(Orders).filter(Orders.status == status).offset(skip).limit(limit).all()
 
-    Returns True if deleted, False otherwise.
-    """
-    order = get_order(db, order_id)
-    if not order:
-        return False
-    db.delete(order)
-    db.commit()
-    return True
 
+order_repo = OrderRepository()
